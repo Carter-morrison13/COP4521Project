@@ -1,6 +1,8 @@
 import mysql.connector
 # Database management program (mostly for testings and makes removing tables and the db itself easy)
 # The prompt function is at the very bottom of this file
+# You must edit the password field below wherever it is used to match your mysql server password that you set when you
+# installed mysql.
 
 
 # connect to sql server in order to create the db (need to have mysql server installed)
