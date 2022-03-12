@@ -12,13 +12,14 @@ def front_page():
 
 @app.route('/createAccount')
 def create_account():
+    if 'loggedin' in session:
+        return render_template('login_result.html', msg="You are already logged into an account!")
     return render_template('createAccount.html')
 
 
 @app.route('/create_Account', methods=['POST', 'GET'])
 def create_function():
     if request.method == 'POST':
-
         # connect to the db
         db = mysql.connector.connect(
             host='localhost',
@@ -47,12 +48,13 @@ def create_function():
 
 @app.route('/login')
 def login():
+    if 'loggedin' in session:
+        return render_template('login_result.html', msg="You are already logged into an account!")
     return render_template("login.html")
 
 
 @app.route('/login_function', methods=['POST', 'GET'])
 def login_function():
-
     if request.method == 'POST':
         # Create variables for easy access
         username = request.form['username']
@@ -83,6 +85,36 @@ def login_function():
         else:
             msg = 'Invalid Credentials!'
             return render_template("login_result.html", msg=msg)
+
+
+@app.route('/shortstory_db/logout')
+def logout():
+    session.pop('loggedin', None)
+    session.pop('username', None)
+    # Redirect to login page
+    return render_template("frontPage.html")
+
+
+@app.route('/shortstory_db/profile')
+def profile():
+    # make sure user is currently logged in
+    if 'loggedin' in session:
+        db = mysql.connector.connect(
+            host='localhost',
+            user='root',
+            password='testing',
+            database='shortstory_db'
+        )
+        cursor = db.cursor()
+        cursor.execute('SELECT * FROM users WHERE username = %s', (session['username'],))
+        account = cursor.fetchone()
+        username = account[0]
+        password = account[1]
+        # Show the profile page with account info
+        return render_template('profile.html', username=username, password=password)
+
+    # redirect to the login page if the user is not logged in
+    return render_template('login.html')
 
 
 if __name__ == '__main__':
