@@ -27,23 +27,19 @@ def create_function():
             password='testing',
             database='shortstory_db'
         )
-
-        try:
-            Username = request.form['username']
-            Password = request.form['password']
-            cursor = db.cursor()
+        Username = request.form['username']
+        Password = request.form['password']
+        cursor = db.cursor()
+        cursor.execute('SELECT * FROM users WHERE username = %s AND password = %s', (Username, Password,))
+        account = cursor.fetchone()
+        if not account:
             sql = "INSERT INTO users (Username, password) VALUES (%s,%s)"
             val = (Username, Password)
             cursor.execute(sql, val)
             db.commit()
-
-        except:
-            # rollback if unable to insert correctly
-            db.rollback()
-
-        finally:
-            db.close()
-            return render_template("frontPage.html")
+            return render_template('login_result.html', msg="Successfully created account!")
+        else:
+            return render_template('login_result.html', msg="Error creating account!")
 
 
 @app.route('/login')
@@ -89,10 +85,14 @@ def login_function():
 
 @app.route('/shortstory_db/logout')
 def logout():
-    session.pop('loggedin', None)
-    session.pop('username', None)
-    # Redirect to login page
-    return render_template("frontPage.html")
+    # if user is logged in to an account currently
+    if 'loggedin' in session:
+        session.pop('loggedin', None)
+        session.pop('username', None)
+        return render_template("login_result.html", msg="Successfully logged out!")
+
+    # if user is not logged in to an account
+    return render_template('login_result.html', msg="You are not logged in to an account!")
 
 
 @app.route('/shortstory_db/profile')
