@@ -1,11 +1,24 @@
 <html>
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/frontPage.css') }}">
+  </head>
+
     <body>
       <div class="navbar">
-        <a class="active" href="../">Home</a>
-        <a href="../shortstory_db/profile">Profile</a>
-        <a href="../shortstory_db/logout">Logout</a>
+        <div class="nav-links">
+            <ul>
+                <li><a href="../">Home</a></li>
+                <li><a href="../shortstory_db/profile">Profile</a></li>
+                <li><a href="../shortstory_db/logout">Logout</a></li>
+            <ul>
+          </div>
       </div>
         <center>
+          <br>
+          <br>
         <font size="+3"><b>Story Project Thing</b></font>
             <br>
             <br>
