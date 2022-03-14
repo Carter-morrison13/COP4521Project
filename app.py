@@ -10,6 +10,43 @@ def front_page():
     return render_template('frontPage.html')
 
 
+@app.route('/createPrompt')
+def create_prompt():
+    if 'loggedin' not in session:
+        return render_template('login_result.html', msg="You must be logged in to create a prompt!")
+    return render_template('createPrompt.html')
+
+
+@app.route('/create_Prompt', methods=['POST', 'GET'])
+def create_prompt_function():
+    if request.method == 'POST':
+        # connect to the db
+        db = mysql.connector.connect(
+            host='localhost',
+            user='root',
+            password='testing',
+            database='shortstory_db'
+        )
+        prompt = request.form['prompt']
+        genre = request.form['genre']
+
+        # make sure form is filled out
+        if prompt == "" or genre == "":
+            return render_template('login_result.html', msg="You must fill out every field in the form!")
+
+        cursor = db.cursor()
+        cursor.execute('SELECT * FROM storage WHERE prompt = %s', (prompt,))
+        account = cursor.fetchone()
+        if not account:
+            sql = "INSERT INTO storage (prompt, genre) VALUES (%s,%s)"
+            val = (prompt, genre)
+            cursor.execute(sql, val)
+            db.commit()
+            return render_template('login_result.html', msg="Successfully created Prompt!")
+        else:
+            return render_template('login_result.html', msg="Error creating Prompt!")
+
+
 @app.route('/createAccount')
 def create_account():
     if 'loggedin' in session:
@@ -29,6 +66,11 @@ def create_function():
         )
         Username = request.form['username']
         Password = request.form['password']
+
+        # make sure form is filled out
+        if Username == "" or Password == "":
+            return render_template('login_result.html', msg="You must fill out every field in the form!")
+
         cursor = db.cursor()
         cursor.execute('SELECT * FROM users WHERE username = %s AND password = %s', (Username, Password,))
         account = cursor.fetchone()
@@ -73,11 +115,10 @@ def login_function():
         if account:
             # Create session data, we can access this data in other routes
             session['loggedin'] = True
-            # setts the session username to the username of the account
+            # sets the session username to the username of the account
             session['username'] = account[0]
-            # Redirect to home page
-            msg = 'Logged in successfully!'
-            return render_template("login_result.html", msg=msg)
+            # Redirect to profile page after logging in
+            return profile()
         else:
             msg = 'Invalid Credentials!'
             return render_template("login_result.html", msg=msg)
