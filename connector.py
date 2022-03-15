@@ -14,15 +14,16 @@ conn = mysql.connector.connect(
     password='testing'
 )
 
+
 def create_db():
     try:
         # create the db
         conn_cursor = conn.cursor()
         conn_cursor.execute("CREATE DATABASE shortstory_db")
         print("Database created successfully!")
-
     except:
         print("Database already exists!")
+
 
 def create_tables():
     # connect to the db
@@ -41,7 +42,7 @@ def create_tables():
     # create the tables
     try:
         cursor.execute(
-            'CREATE TABLE users (username VARCHAR(20) NOT NULL UNIQUE, password VARCHAR(20) NOT NULL, PRIMARY KEY (username))')
+            'CREATE TABLE users (username VARCHAR(20) NOT NULL UNIQUE, password VARCHAR(20) NOT NULL, role VARCHAR(20) NOT NULL, PRIMARY KEY (username))')
         cursor.execute(
             'CREATE TABLE storage (prompt VARCHAR(25) NOT NULL UNIQUE, genre VARCHAR(10) NOT NULL, PRIMARY KEY (prompt))')
         cursor.execute(
@@ -52,13 +53,13 @@ def create_tables():
         print("Tables already exist!")
         db.close()
 
+
 def drop_db():
     try:
         # drop the db
         conn_cursor = conn.cursor()
         conn_cursor.execute("DROP DATABASE shortstory_db")
         print("Database dropped successfully!")
-
     except:
         print("Database doesn't exist!")
 
@@ -87,6 +88,7 @@ def drop_tables():
     except:
         print("Table already exists!")
         db.close()
+
 
 while True:
     choice = (input("Choose from the below options:\n"

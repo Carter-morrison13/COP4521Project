@@ -10,11 +10,26 @@ def front_page():
     return render_template('frontPage.html')
 
 
+@app.route('/adminPanel')
+def admin_panel():
+    if 'loggedin' not in session:
+        return render_template('login_result.html', msg="You must be logged in to access the admin panel!")
+    # check if user has correct role to create a prompt
+    if session['role'] != 'admin':
+        return render_template('login_result.html', msg="You must have the admin role to access the admin panel!")
+    # if the role isn't allowed, we display the error message
+    return render_template('adminPanel.html')
+
+
 @app.route('/createPrompt')
 def create_prompt():
     if 'loggedin' not in session:
         return render_template('login_result.html', msg="You must be logged in to create a prompt!")
-    return render_template('createPrompt.html')
+    # check if user has correct role to create a prompt
+    if session['role'] == 'default':
+        return render_template('createPrompt.html')
+    # if the role isn't allowed, we display the error message
+    return render_template('login_result.html', msg="You do not have permission to create a new prompt!")
 
 
 @app.route('/create_Prompt', methods=['POST', 'GET'])
@@ -66,6 +81,7 @@ def create_function():
         )
         Username = request.form['username']
         Password = request.form['password']
+        Role = 'default'
 
         # make sure form is filled out
         if Username == "" or Password == "":
@@ -75,8 +91,8 @@ def create_function():
         cursor.execute('SELECT * FROM users WHERE username = %s AND password = %s', (Username, Password,))
         account = cursor.fetchone()
         if not account:
-            sql = "INSERT INTO users (Username, password) VALUES (%s,%s)"
-            val = (Username, Password)
+            sql = "INSERT INTO users (username, password, role) VALUES (%s,%s,%s)"
+            val = (Username, Password, Role)
             cursor.execute(sql, val)
             db.commit()
             return render_template('login_result.html', msg="Successfully created account!")
@@ -94,7 +110,7 @@ def login():
 @app.route('/login_function', methods=['POST', 'GET'])
 def login_function():
     if request.method == 'POST':
-        # Create variables for easy access
+
         username = request.form['username']
         password = request.form['password']
 
@@ -115,6 +131,8 @@ def login_function():
         if account:
             # Create session data, we can access this data in other routes
             session['loggedin'] = True
+            # sets the session role to the role of the account
+            session['role'] = account[2]
             # sets the session username to the username of the account
             session['username'] = account[0]
             # Redirect to profile page after logging in
@@ -151,8 +169,9 @@ def profile():
         account = cursor.fetchone()
         username = account[0]
         password = account[1]
+        role = account[2]
         # Show the profile page with account info
-        return render_template('profile.html', username=username, password=password)
+        return render_template('profile.html', username=username, password=password, role=role)
 
     # redirect to the login page if the user is not logged in
     return render_template('login.html')
