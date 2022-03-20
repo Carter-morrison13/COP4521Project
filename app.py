@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import mysql.connector
-
+#from waitress import serve
 app = Flask(__name__)
 app.secret_key = 'your secret key'
 
@@ -176,6 +176,32 @@ def profile():
     # redirect to the login page if the user is not logged in
     return render_template('login.html')
 
+@app.route('/shortstory_db/support', methods=['POST', 'GET'])
+def support():
+    msg = ""
+    if 'loggedin' in session:
+        db = mysql.connector.connect(
+            host='localhost',
+            user='root',
+            password='testing',
+            database='shortstory_db'
+        )
+    cursor = db.cursor()
+    if session['role'] == "Supporter":
+        return render_template('support.html', msg="Already supporting!")
+    if request.method == 'POST':
+        answer = request.form['supportAns']
+        if answer == 'yes':
+            cursor.execute('UPDATE users SET role = "Supporter" WHERE username = %s', (session['username'],))
+            db.commit()
+            msg = "Thank you for supporting! Role has been updated."
+        else:
+            msg = "Not supporting. Same role as before"
+            return render_template('support.html', msg=msg)
+
+    return render_template('support.html', msg=msg)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
+    #serve(app, host="0.0.0.0", port=5000, threads=8)
