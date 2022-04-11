@@ -4,6 +4,17 @@ import mysql.connector
 app = Flask(__name__)
 app.secret_key = 'your secret key'
 
+class ChatroomClass:
+    def __init__(self):
+        self.userList = []
+        self.turnToType = ''
+        self.finishedTyping = []
+        self.prompt = ''
+        self.genre = ''
+        self.story = ''
+
+
+test = ChatroomClass()
 
 @app.route('/')
 def front_page():
@@ -200,6 +211,85 @@ def support():
             return render_template('support.html', msg=msg)
 
     return render_template('support.html', msg=msg)
+
+
+@app.route("/shortstory_db/chatroom", methods=["POST", "GET"])
+def chatroom():
+    if len(test.userList) == 0:
+        test.userList.append(session['username'])
+        if test.turnToType == '':
+            test.turnToType = test.userList[0]
+        return redirect('/shortstory_db/chatroomSetup')
+
+    if session['username'] not in test.userList:
+        test.userList.append(session['username'])
+    while test.prompt == '':
+        return render_template('waitingRoom.html')
+
+
+    doneTyping = 'no'
+    if request.method == 'POST':
+        test.story += request.form['StoryBox']
+        doneTyping = request.form.get('done')
+
+    if (request.method == 'POST') and (not (session['username'] in test.finishedTyping)):
+        print(len(test.finishedTyping))
+        if len(test.finishedTyping) == 0:
+            if test.turnToType is test.userList[0]:
+                test.turnToType = test.userList[1]
+            else:
+                test.turnToType = test.userList[0]
+
+    if doneTyping == 'yes' and not session['username'] in test.finishedTyping:
+        test.finishedTyping.append(session['username'])
+
+    if len(test.finishedTyping) == 2 and test.userList[0] == session['username']:
+        db = mysql.connector.connect(
+            host='localhost',
+            user='root',
+            password='testing',
+            database='shortstory_db'
+        )
+        cursor = db.cursor()
+        sql = "INSERT INTO stories (story_name, prompt, author1, author2) VALUES (%s,%s,%s,%s)"
+        val = (storyName, test.prompt, test.userList[0], test.userList[1])
+        cursor.execute(sql, val)
+        db.commit()
+        return render_template('finishedScreen.html', story=test.story)
+
+    elif len(test.finishedTyping) == 2 and test.userList[1] == session['username']:
+        return render_template('finishedScreen.html', story=test.story)
+
+    if session['username'] in test.finishedTyping:
+        return render_template('chatroom.html', username=session['username'], chatList=test.userList,
+                               story=test.story, prompt=test.prompt,
+                               typingTurn=test.turnToType, allowed='no')
+    if session['username'] == test.turnToType:
+        return render_template('chatroom.html', username=session['username'], chatList=test.userList, story=test.story,
+                               prompt=test.prompt, typingTurn=test.turnToType, allowed='yes')
+    else:
+        return render_template('chatroom.html', username=session['username'], chatList=test.userList, story=test.story,
+                               prompt=test.prompt, typingTurn=test.turnToType, allowed='no')
+
+@app.route("/shortstory_db/chatroomSetup", methods=["POST", "GET"])
+def chatroomSetup():
+    if request.method == 'GET':
+        db = mysql.connector.connect(
+            host='localhost',
+            user='root',
+            password='testing',
+            database='shortstory_db'
+        )
+        cursor = db.cursor()
+        cursor.execute('SELECT prompt, genre FROM storage')
+        prompt = cursor.fetchall()
+        return render_template('chatroomSetup.html', prompt=prompt)
+    elif request.method == 'POST':
+        prompt = request.form['prompt']
+        test.prompt = prompt
+        global storyName
+        storyName = request.form['storyName']
+        return redirect('/shortstory_db/chatroom')
 
 
 if __name__ == '__main__':
