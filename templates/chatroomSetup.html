@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Choose your prompt!</title>
+    <br>
+<form action="../shortstory_db/chatroomSetup" method="POST">
+    <select name="prompt" id="prompt">
+        {% for i in prompt %}
+    <option value="{{ i[0] }}" SELECTED>{{ i }}</option>
+{% endfor %}
+    </select>
+<br>
+<input id="storyName" type="text" name="storyName">
+<input id="submit" value="Submit" type="submit">
+</head>
+</form>
+<body>
+
+</body>
+</html>
