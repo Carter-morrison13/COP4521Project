@@ -13,9 +13,12 @@ class ChatroomClass:
         self.prompt = ''
         self.genre = ''
         self.story = ''
+        self.isDone = ''
 
-
+# currently one chatroom class
 test = ChatroomClass()
+
+
 
 # function to get a db connection
 def getDbConnection():
