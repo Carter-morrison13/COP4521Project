@@ -164,7 +164,7 @@ def logout():
     # if user is not logged in to an account
     return render_template('login_result.html', msg="You are not logged in to an account!")
 
-
+# route to display users profile
 @app.route('/shortstory_db/profile')
 def profile():
     # make sure user is currently logged in
@@ -187,6 +187,27 @@ def profile():
     # redirect to the login page if the user is not logged in
     return render_template('login.html')
 
+# route to display leaderboard of top users
+@app.route('/shortstory_db/leaderboards')
+def leaderboard():
+    # user does not need to be logged in to view the leaderboards
+    db = mysql.connector.connect(
+        host='localhost',
+        user='root',
+        password='testing',
+        database='shortstory_db'
+    )
+    # need to select all users and order them by the number stories they have contributed to
+    cursor = db.cursor()
+    cursor.execute('SELECT username FROM users LIMIT 10')
+    rows = cursor.fetchall()
+    userList = []
+    for row in rows:
+        userList.append(row[0])
+    print(userList)
+    return render_template('leaderboards.html', usersList=userList)
+
+# route to the support page where a User can choose to be upgraded to supporter role
 @app.route('/shortstory_db/support', methods=['POST', 'GET'])
 def support():
     msg = ""
