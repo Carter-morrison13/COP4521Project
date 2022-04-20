@@ -313,7 +313,13 @@ def chatroom():
         cursor = db.cursor()
         sql = "UPDATE users SET numStories = numStories + 1 WHERE username='" + test.userList[1] + "'"
         cursor.execute(sql)
-        db.commit()     
+        db.commit()   
+        test.userList = []
+        test.turnToType = ''
+        test.finishedTyping = []
+        test.prompt = ''
+        test.genre = ''
+        test.story = ''
         return render_template('finishedScreen.html', story=test.story)
 
     elif len(test.finishedTyping) == 2 and test.userList[1] == session['username']:
