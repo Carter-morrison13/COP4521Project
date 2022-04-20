@@ -2,14 +2,16 @@
     <body>     
         <h1 align="center">Top Users</h1>
 
-        <table align="center" border = 1>
+        <table align="center" border = 0>
             <thead>
+                <th>#</th>
                 <th>Username</th>
                 <th>Number of Stories</th>
             </thead>
             
             {% for user in usersList %}
                 <tr>
+                    <td>{{user[2]}}.</td>
                     <td>{{user[0]}}</td>
                     <td>{{user[1]}}</td>
                 </tr>

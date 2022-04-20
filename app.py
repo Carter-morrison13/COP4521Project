@@ -1,3 +1,4 @@
+from collections import UserList
 from flask import Flask, render_template, request, redirect, url_for, session
 import mysql.connector
 #from waitress import serve
@@ -201,6 +202,8 @@ def leaderboard():
     cursor = db.cursor()
     cursor.execute('SELECT username, numStories FROM users ORDER BY numStories DESC LIMIT 10')
     usersList = cursor.fetchall()
+    for i in range(len(usersList)):
+        usersList[i] = usersList[i] + (i+1,)
     print(usersList)
     return render_template('leaderboards.html', usersList=usersList)
 
