@@ -1,0 +1,18 @@
+# https://stavshamir.github.io/python/dockerizing-a-flask-mysql-app-with-docker-compose/
+
+version: "2"
+services:
+  app:
+    build: ./app
+    links:
+      - mysql_db
+    ports:
+      - "5000:5000"
+  db:
+    image: debian
+    ports:
+      - "32000:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: testing
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d/:ro

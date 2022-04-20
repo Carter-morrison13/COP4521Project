@@ -9,7 +9,7 @@ class ChatroomClass:
     def __init__(self):
         self.userList = []
         self.turnToType = ''
-        self.finishedTyping = []
+        self.finishedTypingList = []
         self.prompt = ''
         self.genre = ''
         self.story = ''
@@ -17,10 +17,18 @@ class ChatroomClass:
 
 test = ChatroomClass()
 
+# function to get a db connection
+def getDbConnection():
+    return mysql.connector.connect(
+            host='localhost',
+            user='root',
+            password='password',
+            database='shortstory_db'
+        )
+
 @app.route('/')
 def front_page():
     return render_template('frontPage.html')
-
 
 @app.route('/adminPanel')
 def admin_panel():
@@ -48,12 +56,7 @@ def create_prompt():
 def create_prompt_function():
     if request.method == 'POST':
         # connect to the db
-        db = mysql.connector.connect(
-            host='localhost',
-            user='root',
-            password='password',
-            database='shortstory_db'
-        )
+        db = getDbConnection()
         prompt = request.form['prompt']
         genre = request.form['genre']
 
@@ -85,12 +88,7 @@ def create_account():
 def create_function():
     if request.method == 'POST':
         # connect to the db
-        db = mysql.connector.connect(
-            host='localhost',
-            user='root',
-            password='password',
-            database='shortstory_db'
-        )
+        db = getDbConnection()
         Username = request.form['username']
         Password = request.form['password']
         Role = 'default'
@@ -118,7 +116,6 @@ def login():
         return render_template('login_result.html', msg="You are already logged into an account!")
     return render_template("login.html")
 
-
 @app.route('/login_function', methods=['POST', 'GET'])
 def login_function():
     if request.method == 'POST':
@@ -127,12 +124,7 @@ def login_function():
         password = request.form['password']
 
         # connect to the db
-        db = mysql.connector.connect(
-            host='localhost',
-            user='root',
-            password='password',
-            database='shortstory_db'
-        )
+        db = getDbConnection()
 
         cursor = db.cursor()
         cursor.execute('SELECT * FROM users WHERE username = %s AND password = %s', (username, password,))
@@ -170,12 +162,7 @@ def logout():
 def profile():
     # make sure user is currently logged in
     if 'loggedin' in session:
-        db = mysql.connector.connect(
-            host='localhost',
-            user='root',
-            password='password',
-            database='shortstory_db'
-        )
+        db = getDbConnection()
         cursor = db.cursor()
         cursor.execute('SELECT * FROM users WHERE username = %s', (session['username'],))
         account = cursor.fetchone()
@@ -192,12 +179,7 @@ def profile():
 @app.route('/shortstory_db/leaderboards')
 def leaderboard():
     # user does not need to be logged in to view the leaderboards
-    db = mysql.connector.connect(
-        host='localhost',
-        user='root',
-        password='testing',
-        database='shortstory_db'
-    )
+    db = getDbConnection()
     # need to select all users and order them by the number stories they have contributed to
     cursor = db.cursor()
     cursor.execute('SELECT username, numStories FROM users ORDER BY numStories DESC LIMIT 10')
@@ -212,12 +194,7 @@ def leaderboard():
 def support():
     msg = ""
     if 'loggedin' in session:
-        db = mysql.connector.connect(
-            host='localhost',
-            user='root',
-            password='password',
-            database='shortstory_db'
-        )
+        db = getDbConnection()
     cursor = db.cursor()
     if session['role'] == "Supporter":
         return render_template('support.html', msg="Already supporting!")
@@ -239,12 +216,7 @@ def support():
 def moderate():
     msg = ""
     if 'loggedin' in session:
-        db = mysql.connector.connect(
-            host='localhost',
-            user='root',
-            password='password',
-            database='shortstory_db'
-        )
+        db = getDbConnection()
     else:
         msg = "Please log in"
         return render_template('moderate.html', msg = msg)
@@ -262,43 +234,60 @@ def moderate():
             
     return render_template('moderate.html', msg = msg)
 
+# route for the chat room functionality
 @app.route("/shortstory_db/chatroom", methods=["POST", "GET"])
 def chatroom():
+    # if number of users in chat room is still 0
+    # then add the current user to the room and if it's
+    # noones turn to type it becomes their turn to type
+    # redirect to chatroom setup.
     if len(test.userList) == 0:
         test.userList.append(session['username'])
         if test.turnToType == '':
             test.turnToType = test.userList[0]
         return redirect('/shortstory_db/chatroomSetup')
 
+    # if the current user is not in the userList at this point
+    # append them to the current userList
     if session['username'] not in test.userList:
         test.userList.append(session['username'])
+
+    # while the prompt is empty keep this user in a waiting room
     while test.prompt == '':
         return render_template('waitingRoom.html')
 
 
+    # now while the two users are not done typing we continually do POST
+    # requests each time the user's go to this page
     doneTyping = 'no'
+
+    # if method is POST, then get whats in the story box
+    # and then get if this user is done.
     if request.method == 'POST':
         test.story += request.form['StoryBox']
         doneTyping = request.form.get('done')
 
-    if (request.method == 'POST') and (not (session['username'] in test.finishedTyping)):
-        print(len(test.finishedTyping))
-        if len(test.finishedTyping) == 0:
+    # if method is POST and the current user is not finished typing
+    if (request.method == 'POST') and (not (session['username'] in test.finishedTypingList)):
+        print(len(test.finishedTypingList)) # print the length of finished typing
+
+        # if length of finished typing is 0        
+        if len(test.finishedTypingList) == 0:
+            # check whose turn it is to type and then switch whose turn
             if test.turnToType is test.userList[0]:
                 test.turnToType = test.userList[1]
             else:
                 test.turnToType = test.userList[0]
 
-    if doneTyping == 'yes' and not session['username'] in test.finishedTyping:
-        test.finishedTyping.append(session['username'])
+    # if current user is done typing and its not in the finished typing array of users
+    # append current user to finished typing
+    if doneTyping == 'yes' and not session['username'] in test.finishedTypingList:
+        test.finishedTypingList.append(session['username'])
 
-    if len(test.finishedTyping) == 2 and test.userList[0] == session['username']:
-        db = mysql.connector.connect(
-            host='localhost',
-            user='root',
-            password='password',
-            database='shortstory_db'
-        )
+    # when length of finished typing is 2 and the the first user in userList is the current user
+    if len(test.finishedTypingList) == 2 and test.userList[0] == session['username']:
+        # connect to database
+        db = getDbConnection()
         # update the stories table with this new story
         cursor = db.cursor()
         sql = "INSERT INTO stories (story_name, prompt, author1, author2) VALUES (%s,%s,%s,%s)"
@@ -313,45 +302,60 @@ def chatroom():
         cursor = db.cursor()
         sql = "UPDATE users SET numStories = numStories + 1 WHERE username='" + test.userList[1] + "'"
         cursor.execute(sql)
-        db.commit()   
+        db.commit()
+        # reset test varibles userList, finishedTypingList
         test.userList = []
         test.turnToType = ''
-        test.finishedTyping = []
+        test.finishedTypingList = []
         test.prompt = ''
         test.genre = ''
         test.story = ''
         return render_template('finishedScreen.html', story=test.story)
 
-    elif len(test.finishedTyping) == 2 and test.userList[1] == session['username']:
+    # else if finished typing list is length 2 and user 1 in the user list is the current user
+    elif len(test.finishedTypingList) == 2 and test.userList[1] == session['username']:
+        # return the finished screen
         return render_template('finishedScreen.html', story=test.story)
 
-    if session['username'] in test.finishedTyping:
+    # if the current user is in the finished test list, then they are the first one to finish
+    if session['username'] in test.finishedTypingList:
+
         return render_template('chatroom.html', username=session['username'], chatList=test.userList,
                                story=test.story, prompt=test.prompt,
                                typingTurn=test.turnToType, allowed='no')
+    
+    # if its the current users turn to type
     if session['username'] == test.turnToType:
+        # render the chatroom with current info where they can type
         return render_template('chatroom.html', username=session['username'], chatList=test.userList, story=test.story,
                                prompt=test.prompt, typingTurn=test.turnToType, allowed='yes')
+    # else return them the chatroom where they cant type with the current info
     else:
         return render_template('chatroom.html', username=session['username'], chatList=test.userList, story=test.story,
                                prompt=test.prompt, typingTurn=test.turnToType, allowed='no')
 
+
+# route for when a user goes to the chatroom setup. First user to join the chat room
+# will be sent to this page
 @app.route("/shortstory_db/chatroomSetup", methods=["POST", "GET"])
 def chatroomSetup():
+    # case 1. Its a GET request
     if request.method == 'GET':
-        db = mysql.connector.connect(
-            host='localhost',
-            user='root',
-            password='testing',
-            database='shortstory_db'
-        )
+        # get connection to database
+        db = getDbConnection()
+        # get a database cursor
         cursor = db.cursor()
+        # execute SELECT query to get the current prompts and genres to display to the user 
         cursor.execute('SELECT prompt, genre FROM storage')
         prompt = cursor.fetchall()
         return render_template('chatroomSetup.html', prompt=prompt)
     elif request.method == 'POST':
+        # case 2. POST request
+        # get the user selected prompt and story name
         prompt = request.form['prompt']
+        # store prompt in test
         test.prompt = prompt
+        # store storyName as a global
         global storyName
         storyName = request.form['storyName']
         return redirect('/shortstory_db/chatroom')
