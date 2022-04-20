@@ -50,7 +50,7 @@ def create_prompt_function():
         db = mysql.connector.connect(
             host='localhost',
             user='root',
-            password='testing',
+            password='password',
             database='shortstory_db'
         )
         prompt = request.form['prompt']
@@ -87,7 +87,7 @@ def create_function():
         db = mysql.connector.connect(
             host='localhost',
             user='root',
-            password='testing',
+            password='password',
             database='shortstory_db'
         )
         Username = request.form['username']
@@ -129,7 +129,7 @@ def login_function():
         db = mysql.connector.connect(
             host='localhost',
             user='root',
-            password='testing',
+            password='password',
             database='shortstory_db'
         )
 
@@ -172,7 +172,7 @@ def profile():
         db = mysql.connector.connect(
             host='localhost',
             user='root',
-            password='testing',
+            password='password',
             database='shortstory_db'
         )
         cursor = db.cursor()
@@ -194,7 +194,7 @@ def support():
         db = mysql.connector.connect(
             host='localhost',
             user='root',
-            password='testing',
+            password='password',
             database='shortstory_db'
         )
     cursor = db.cursor()
@@ -212,6 +212,32 @@ def support():
 
     return render_template('support.html', msg=msg)
 
+@app.route('/shortstory_db/moderate', methods=['POST', 'GET'])
+def moderate():
+    msg = ""
+    if 'loggedin' in session:
+        db = mysql.connector.connect(
+            host='localhost',
+            user='root',
+            password='password',
+            database='shortstory_db'
+        )
+    else:
+        msg = "Please log in"
+        return render_template('moderate.html', msg = msg)
+    cursor = db.cursor()
+    if session['role'] == "Moderator":
+        return render_template('moderate.html', msg="Already a mod!")
+    if request.method == 'POST':
+        answer = request.form['modAns']
+        if answer == 'imamodnow':
+            cursor.execute('UPDATE users SET role = "Moderator" WHERE username = %s', (session['username'],))
+            db.commit()
+            msg = "You are now a moderator! Please moderate with responsibility."
+        else:
+            msg = "The password is incorrect"
+            
+    return render_template('moderate.html', msg = msg)
 
 @app.route("/shortstory_db/chatroom", methods=["POST", "GET"])
 def chatroom():
@@ -247,7 +273,7 @@ def chatroom():
         db = mysql.connector.connect(
             host='localhost',
             user='root',
-            password='testing',
+            password='password',
             database='shortstory_db'
         )
         cursor = db.cursor()

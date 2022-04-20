@@ -11,7 +11,7 @@ conn = mysql.connector.connect(
     # the user should default to root when you install it
     user='root',
     # this is the password I made it when installing mysql
-    password='testing'
+    password='password'
 )
 
 
@@ -31,7 +31,7 @@ def create_tables():
         db = mysql.connector.connect(
             host='localhost',
             user='root',
-            password='testing',
+            password='password',
             database='shortstory_db'
         )
     except:
@@ -70,7 +70,7 @@ def drop_tables():
         db = mysql.connector.connect(
             host='localhost',
             user='root',
-            password='testing',
+            password='password',
             database='shortstory_db'
         )
     except:
