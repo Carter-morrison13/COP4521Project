@@ -337,8 +337,10 @@ def chatroom():
         test.finishedTyping = []
         test.prompt = ''
         test.genre = ''
+        tmp = test.story
         test.story = ''
-        return render_template('finishedScreen.html', story=test.story)
+
+        return render_template('finishedScreen.html', story=tmp)
 
     elif len(test.finishedTyping) == 2 and test.userList[1] == session['username']:
         return render_template('finishedScreen.html', story=test.story)
