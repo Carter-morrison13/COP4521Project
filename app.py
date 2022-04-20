@@ -1,3 +1,4 @@
+from collections import UserList
 from flask import Flask, render_template, request, redirect, url_for, session
 import mysql.connector
 #from waitress import serve
@@ -37,10 +38,10 @@ def create_prompt():
     if 'loggedin' not in session:
         return render_template('login_result.html', msg="You must be logged in to create a prompt!")
     # check if user has correct role to create a prompt
-    if session['role'] == 'default':
+    if session['role'] == 'Supporter':
         return render_template('createPrompt.html')
     # if the role isn't allowed, we display the error message
-    return render_template('login_result.html', msg="You do not have permission to create a new prompt!")
+    return render_template('login_result.html', msg="You must be a Supporter to create a new prompt!")
 
 
 @app.route('/create_Prompt', methods=['POST', 'GET'])
@@ -102,8 +103,8 @@ def create_function():
         cursor.execute('SELECT * FROM users WHERE username = %s AND password = %s', (Username, Password,))
         account = cursor.fetchone()
         if not account:
-            sql = "INSERT INTO users (username, password, role) VALUES (%s,%s,%s)"
-            val = (Username, Password, Role)
+            sql = "INSERT INTO users (username, password, role, numStories) VALUES (%s,%s,%s,%s)"
+            val = (Username, Password, Role, '0')
             cursor.execute(sql, val)
             db.commit()
             return render_template('login_result.html', msg="Successfully created account!")
@@ -164,7 +165,7 @@ def logout():
     # if user is not logged in to an account
     return render_template('login_result.html', msg="You are not logged in to an account!")
 
-
+# route to display users profile
 @app.route('/shortstory_db/profile')
 def profile():
     # make sure user is currently logged in
@@ -187,6 +188,26 @@ def profile():
     # redirect to the login page if the user is not logged in
     return render_template('login.html')
 
+# route to display leaderboard of users with most stories contributed to.
+@app.route('/shortstory_db/leaderboards')
+def leaderboard():
+    # user does not need to be logged in to view the leaderboards
+    db = mysql.connector.connect(
+        host='localhost',
+        user='root',
+        password='testing',
+        database='shortstory_db'
+    )
+    # need to select all users and order them by the number stories they have contributed to
+    cursor = db.cursor()
+    cursor.execute('SELECT username, numStories FROM users ORDER BY numStories DESC LIMIT 10')
+    usersList = cursor.fetchall()
+    for i in range(len(usersList)):
+        usersList[i] = usersList[i] + (i+1,)
+    print(usersList)
+    return render_template('leaderboards.html', usersList=usersList)
+
+# route to the support page where a User can choose to be upgraded to supporter role
 @app.route('/shortstory_db/support', methods=['POST', 'GET'])
 def support():
     msg = ""
@@ -205,6 +226,8 @@ def support():
         if answer == 'yes':
             cursor.execute('UPDATE users SET role = "Supporter" WHERE username = %s', (session['username'],))
             db.commit()
+            # sets the session role to the role of the account
+            session['role'] = 'Supporter'
             msg = "Thank you for supporting! Role has been updated."
         else:
             msg = "Not supporting. Same role as before"
@@ -276,11 +299,21 @@ def chatroom():
             password='password',
             database='shortstory_db'
         )
+        # update the stories table with this new story
         cursor = db.cursor()
         sql = "INSERT INTO stories (story_name, prompt, author1, author2) VALUES (%s,%s,%s,%s)"
         val = (storyName, test.prompt, test.userList[0], test.userList[1])
         cursor.execute(sql, val)
         db.commit()
+        # update each of the two users 'numStories' field in the users table
+        cursor = db.cursor()
+        sql = "UPDATE users SET numStories = numStories + 1 WHERE username='" + test.userList[0] + "'"
+        cursor.execute(sql)
+        db.commit()
+        cursor = db.cursor()
+        sql = "UPDATE users SET numStories = numStories + 1 WHERE username='" + test.userList[1] + "'"
+        cursor.execute(sql)
+        db.commit()     
         return render_template('finishedScreen.html', story=test.story)
 
     elif len(test.finishedTyping) == 2 and test.userList[1] == session['username']:
