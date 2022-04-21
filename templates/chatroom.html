@@ -1,18 +1,18 @@
 <meta http-equiv="refresh" content="10">
 <html>
 <body onload="isItMyTurnYet()">
-{% for i in chatList %}
-    {{ i }}
-{% endfor %}
 <br>
-{{ typingTurn }}<br>
-{{ allowed }}<br>
 <tr>
-    <td>Prompt:</td>
-    <td>{{ prompt }}</td><br>
-    <td>Story so far:</td>
-    <td>{{ story }}</td><br>
+    <table align="center" border = 1>
+         <thead>
+            <td>Story So Far</td>
+            <td>Prompt</td>
+         </thead>
+         <td>{{story}}</td>
+        <td>{{prompt}}</td>
+      </table>
 </tr>
+<td>Type Your Story Here</td>
 <form action = "../shortstory_db/chatroom_{{storyName}}" method="POST">
     <textarea id="StoryBox" name="StoryBox" rows="2" cols="31"></textarea>
     <br>
