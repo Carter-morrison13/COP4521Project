@@ -13,7 +13,7 @@
     <td>Story so far:</td>
     <td>{{ story }}</td><br>
 </tr>
-<form action = "../shortstory_db/chatroom" method="POST">
+<form action = "../shortstory_db/chatroom_{{storyName}}" method="POST">
     <textarea id="StoryBox" name="StoryBox" rows="2" cols="31"></textarea>
     <br>
     Are you done? (type 'yes' or 'no')<input type="text" id ="done" name="done"><br>
