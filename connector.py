@@ -46,7 +46,7 @@ def create_tables():
         cursor.execute(
             'CREATE TABLE storage (prompt VARCHAR(25) NOT NULL UNIQUE, genre VARCHAR(10) NOT NULL, PRIMARY KEY (prompt))')
         cursor.execute(
-            'CREATE TABLE stories (story_name VARCHAR(25) NOT NULL UNIQUE, prompt VARCHAR(25) NOT NULL UNIQUE, author1 VARCHAR(10) NOT NULL, author2 VARCHAR(10) NOT NULL, story TEXT NOT NULL, PRIMARY KEY (story_name), FOREIGN KEY (prompt) REFERENCES storage(prompt))')
+            'CREATE TABLE stories (story_name VARCHAR(25) NOT NULL UNIQUE, prompt VARCHAR(25) NOT NULL UNIQUE, author1 VARCHAR(10) NOT NULL, author2 VARCHAR(10) NOT NULL, story TEXT NOT NULL, ratings INTEGER NOT NULL, PRIMARY KEY (story_name), FOREIGN KEY (prompt) REFERENCES storage(prompt))')
         print("Tables created successfully!")
         db.close()
     except:
