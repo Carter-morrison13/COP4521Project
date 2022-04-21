@@ -75,6 +75,30 @@ def create_prompt():
     # if the role isn't allowed, we display the error message
     return render_template('login_result.html', msg="You must be a Supporter to create a new prompt!")
 
+@app.route('/voting')
+def voting():
+    if 'loggedin' not in session:
+        return render_template('login_result.html', msg="You must be logged in to cast a vote!")
+    # check if user has correct role to create a prompt
+    if session['role'] == 'Supporter' or session['role'] == 'Moderator' or session['role'] == 'default':
+        return render_template('voting.html')
+    # if the role isn't allowed, we display the error message
+    return render_template('login_result.html', msg="You must be a Supporter to create a new prompt!")
+
+@app.route('/cast_vote', methods=['POST', 'GET'])
+def cast_vote_func():
+    if request.method == 'POST':
+        db = getDbConnection()
+        name = request.form['storyname']
+        cur = db.cursor()
+        cur.execute('SELECT * FROM stories WHERE story_name = %s', (name,))
+        check = cur.fetchone()
+        if check:
+            cur.execute('UPDATE stories ratings SET ratings = ratings + 1 WHERE story_name = %s', (name,))
+            db.commit()
+            return render_template('login_result.html', msg="Succesfully cast your vote!")
+        else:
+            return render_template('login_result.html', msg="Story was not found.")
 
 @app.route('/create_Prompt', methods=['POST', 'GET'])
 def create_prompt_function():
@@ -136,6 +160,7 @@ def create_function():
             return render_template('login_result.html', msg="Successfully created account!")
         else:
             return render_template('login_result.html', msg="Error creating account!")
+
 
 
 @app.route('/login')
@@ -253,9 +278,9 @@ def support():
 def browse():
     db = getDbConnection()
     cursor = db.cursor()
-    cursor.execute('SELECT story_name, story, author1, author2 FROM stories LIMIT 15')
+    cursor.execute('SELECT story_name, story, author1, author2, ratings FROM stories LIMIT 15')
     rows = cursor.fetchall()
-    print(rows)
+    #print(rows)
     # cur.execute("SELECT Username, Review, Rating FROM Reviews WHERE Restaurant = ?", (name,))
 
     return render_template('browse.html', ROWS=rows)
