@@ -1,9 +1,12 @@
+import hashlib
 from collections import UserList
 from flask import Flask, render_template, request, redirect, url_for, session
 import mysql.connector
 from waitress import serve
+
 app = Flask(__name__)
 app.secret_key = 'your secret key'
+
 
 class ChatroomClass:
     def __init__(self):
@@ -13,46 +16,62 @@ class ChatroomClass:
         self.prompt = ''
         self.genre = ''
         self.story = ''
+
     def GetUserList(self):
         return self.userList
+
     def AppendToUserList(self, user):
         self.userList.append(user)
+
     def SetTurnToType(self, turn):
         self.turnToType = turn
+
     def GetTurnToType(self):
         return self.turnToType
+
     def GetFinishedTypingList(self):
         return self.finishedTypingList
+
     def AppendToFinishedTypingList(self, user):
         self.finishedTypingList.append(user)
+
     def GetPrompt(self):
         return self.prompt
+
     def SetPrompt(self, prompt):
         self.prompt = prompt
+
     def GetGenre(self):
         return self.genre
+
     def SetGenre(self, genre):
         self.genre = genre
+
     def GetStory(self):
         return self.story
+
     def SetStory(self, story):
         self.story = story
 
+
 # dictionary/map of the current stories going on
-# 
+#
 current_stories = {}
 
 # currently one chatroom class
 test = ChatroomClass()
 
+
 # function to get a db connection
+# change password to match yours
 def getDbConnection():
     return mysql.connector.connect(
-            host='localhost',
-            user='root',
-            password='password',
-            database='shortstory_db'
-        )
+        host='localhost',
+        user='root',
+        password='testing',
+        database='shortstory_db'
+    )
+
 
 @app.route('/')
 def front_page():
@@ -126,6 +145,10 @@ def create_function():
         if Username == "" or Password == "":
             return render_template('login_result.html', msg="You must fill out every field in the form!")
 
+        # encrpyting the password with SHA256
+        Password = Password.encode('utf-8')
+        Password = hashlib.sha256(Password).hexdigest()
+
         cursor = db.cursor()
         cursor.execute('SELECT * FROM users WHERE username = %s AND password = %s', (Username, Password,))
         account = cursor.fetchone()
@@ -155,6 +178,10 @@ def login_function():
 
         # connect to the db
         db = getDbConnection()
+
+        # encrpyting the password with SHA256
+        password = password.encode('utf-8')
+        password = hashlib.sha256(password).hexdigest()
 
         cursor = db.cursor()
         cursor.execute('SELECT * FROM users WHERE username = %s AND password = %s', (username, password,))
@@ -187,6 +214,7 @@ def logout():
     # if user is not logged in to an account
     return render_template('login_result.html', msg="You are not logged in to an account!")
 
+
 # route to display users profile
 @app.route('/shortstory_db/profile')
 def profile():
@@ -205,6 +233,7 @@ def profile():
     # redirect to the login page if the user is not logged in
     return render_template('login.html')
 
+
 # route to display leaderboard of users with most stories contributed to.
 @app.route('/shortstory_db/leaderboards')
 def leaderboard():
@@ -215,9 +244,10 @@ def leaderboard():
     cursor.execute('SELECT username, numStories FROM users ORDER BY numStories DESC LIMIT 10')
     usersList = cursor.fetchall()
     for i in range(len(usersList)):
-        usersList[i] = usersList[i] + (i+1,)
-    #print(usersList)
+        usersList[i] = usersList[i] + (i + 1,)
+    # print(usersList)
     return render_template('leaderboards.html', usersList=usersList)
+
 
 # route to the support page where a User can choose to be upgraded to supporter role
 @app.route('/shortstory_db/support', methods=['POST', 'GET'])
@@ -250,7 +280,7 @@ def browse():
     cursor.execute('SELECT story_name, story, author1, author2 FROM stories LIMIT 15')
     rows = cursor.fetchall()
     print(rows)
-    #cur.execute("SELECT Username, Review, Rating FROM Reviews WHERE Restaurant = ?", (name,))
+    # cur.execute("SELECT Username, Review, Rating FROM Reviews WHERE Restaurant = ?", (name,))
 
     return render_template('browse.html', ROWS=rows)
 
@@ -262,7 +292,7 @@ def moderate():
         db = getDbConnection()
     else:
         msg = "Please log in"
-        return render_template('moderate.html', msg = msg)
+        return render_template('moderate.html', msg=msg)
     cursor = db.cursor()
     if session['role'] == "Moderator":
         return render_template('moderate.html', msg="Already a mod!")
@@ -274,8 +304,9 @@ def moderate():
             msg = "You are now a moderator! Please moderate with responsibility."
         else:
             msg = "The password is incorrect"
-            
-    return render_template('moderate.html', msg = msg)
+
+    return render_template('moderate.html', msg=msg)
+
 
 # route for the chat room functionality
 @app.route("/shortstory_db/chatroom", methods=["POST", "GET"])
@@ -311,9 +342,9 @@ def chatroom():
 
     # if method is POST and the current user is not finished typing
     if (request.method == 'POST') and (not (session['username'] in test.finishedTypingList)):
-        print(len(test.finishedTypingList)) # print the length of finished typing
-        
-        # if length of finished typing is 0   
+        print(len(test.finishedTypingList))  # print the length of finished typing
+
+        # if length of finished typing is 0
         if len(test.finishedTypingList) == 0:
             # check whose turn it is to type and then switch whose turn
             if test.turnToType is test.userList[0]:
@@ -343,7 +374,7 @@ def chatroom():
         cursor = db.cursor()
         sql = "UPDATE users SET numStories = numStories + 1 WHERE username='" + test.userList[1] + "'"
         cursor.execute(sql)
-        db.commit()   
+        db.commit()
         test.userList = []
         test.turnToType = ''
         test.finishedTypingList = []
@@ -365,7 +396,7 @@ def chatroom():
                                story=test.story, prompt=test.prompt,
                                typingTurn=test.turnToType, allowed='no')
 
-     # if its the current users turn to type
+    # if its the current users turn to type
     if session['username'] == test.turnToType:
         # render the chatroom with current info where they can type
         return render_template('chatroom.html', username=session['username'], chatList=test.userList, story=test.story,
@@ -386,7 +417,7 @@ def chatroomSetup():
         db = getDbConnection()
         # get connection to database
         cursor = db.cursor()
-        # execute SELECT query to get the current prompts and genres to display to the user 
+        # execute SELECT query to get the current prompts and genres to display to the user
         cursor.execute('SELECT prompt, genre FROM storage')
         prompt = cursor.fetchall()
         return render_template('chatroomSetup.html', prompt=prompt)
@@ -403,5 +434,5 @@ def chatroomSetup():
 
 
 if __name__ == '__main__':
-    #app.run(debug=True)
+    # app.run(debug=True)
     serve(app, host="0.0.0.0", port=5000, threads=8)
