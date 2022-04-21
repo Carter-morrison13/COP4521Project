@@ -38,7 +38,7 @@ def create_prompt():
     if 'loggedin' not in session:
         return render_template('login_result.html', msg="You must be logged in to create a prompt!")
     # check if user has correct role to create a prompt
-    if session['role'] == 'Supporter':
+    if session['role'] == 'Supporter' or session['role'] == 'Moderator':
         return render_template('createPrompt.html')
     # if the role isn't allowed, we display the error message
     return render_template('login_result.html', msg="You must be a Supporter to create a new prompt!")
@@ -195,7 +195,7 @@ def leaderboard():
     db = mysql.connector.connect(
         host='localhost',
         user='root',
-        password='testing',
+        password='password',
         database='shortstory_db'
     )
     # need to select all users and order them by the number stories they have contributed to
@@ -256,6 +256,7 @@ def moderate():
         if answer == 'imamodnow':
             cursor.execute('UPDATE users SET role = "Moderator" WHERE username = %s', (session['username'],))
             db.commit()
+            session['role'] = 'Moderator'
             msg = "You are now a moderator! Please moderate with responsibility."
         else:
             msg = "The password is incorrect"
