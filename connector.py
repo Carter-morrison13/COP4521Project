@@ -70,7 +70,7 @@ def drop_tables():
         db = mysql.connector.connect(
             host='localhost',
             user='root',
-            password='password',
+            password='testing',
             database='shortstory_db'
         )
     except:
@@ -109,7 +109,6 @@ while True:
         quit()
     else:
         print("Invalid input")
-
 
 
 
