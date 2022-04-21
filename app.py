@@ -310,11 +310,11 @@ def chatroom():
         doneTyping = request.form.get('done')
 
     # if method is POST and the current user is not finished typing
-    if (request.method == 'POST') and (not (session['username'] in test.finishedTyping)):
-        print(len(test.finishedTyping)) # print the length of finished typing
+    if (request.method == 'POST') and (not (session['username'] in test.finishedTypingList)):
+        print(len(test.finishedTypingList)) # print the length of finished typing
         
         # if length of finished typing is 0   
-        if len(test.finishedTyping) == 0:
+        if len(test.finishedTypingList) == 0:
             # check whose turn it is to type and then switch whose turn
             if test.turnToType is test.userList[0]:
                 test.turnToType = test.userList[1]
@@ -323,11 +323,11 @@ def chatroom():
 
     # if current user is done typing and its not in the finished typing array of users
     # append current user to finished typing
-    if doneTyping == 'yes' and not session['username'] in test.finishedTyping:
-        test.finishedTyping.append(session['username'])
+    if doneTyping == 'yes' and not session['username'] in test.finishedTypingList:
+        test.finishedTypingList.append(session['username'])
 
     # when length of finished typing is 2 and the the first user in userList is the current user
-    if len(test.finishedTyping) == 2 and test.userList[0] == session['username']:
+    if len(test.finishedTypingList) == 2 and test.userList[0] == session['username']:
         db = getDbConnection()
         # update the stories table with this new story
         cursor = db.cursor()
@@ -346,7 +346,7 @@ def chatroom():
         db.commit()   
         test.userList = []
         test.turnToType = ''
-        test.finishedTyping = []
+        test.finishedTypingList = []
         test.prompt = ''
         test.genre = ''
         tmp = test.story
@@ -355,12 +355,12 @@ def chatroom():
         return render_template('finishedScreen.html', story=tmp)
 
     # else if finished typing list is length 2 and user 1 in the user list is the current user
-    elif len(test.finishedTyping) == 2 and test.userList[1] == session['username']:
+    elif len(test.finishedTypingList) == 2 and test.userList[1] == session['username']:
         # return the finished screen
         return render_template('finishedScreen.html', story=test.story)
 
     # if the current user is in the finished test list, then they are the first one to finish
-    if session['username'] in test.finishedTyping:
+    if session['username'] in test.finishedTypingList:
         return render_template('chatroom.html', username=session['username'], chatList=test.userList,
                                story=test.story, prompt=test.prompt,
                                typingTurn=test.turnToType, allowed='no')
