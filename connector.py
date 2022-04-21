@@ -70,7 +70,7 @@ def drop_tables():
         db = mysql.connector.connect(
             host='localhost',
             user='root',
-            password='testing',
+            password='password',
             database='shortstory_db'
         )
     except:
