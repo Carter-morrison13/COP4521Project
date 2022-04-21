@@ -2,6 +2,7 @@ import hashlib
 from collections import UserList
 from re import S
 from turtle import st
+from colorama import Cursor
 from flask import Flask, render_template, request, redirect, url_for, session
 import mysql.connector
 import time
@@ -57,17 +58,59 @@ def front_page():
 @app.route('/adminPanel')
 def admin_panel():
     if 'loggedin' not in session:
-        return render_template('login_result.html', msg="You must be logged in to access the admin panel!")
+        return render_template('login_result.html', msg="You must be logged in to access the admin panel!", rows = [])
     # check if user has correct role to create a prompt
-    if session['role'] != 'admin':
-        return render_template('login_result.html', msg="You must have the admin role to access the admin panel!")
+    if session['role'] != 'Moderator':
+        return render_template('login_result.html', msg="You must have the moderator role to access the admin panel!", rows = [])
     # if the role isn't allowed, we display the error message
     db = getDbConnection()
     cursor = db.cursor()
     cursor.execute('SELECT username, role, numStories FROM users')
-    therows = cursor.fetchone()
+    therows = cursor.fetchall()
     return render_template('adminPanel.html', msg = 'Welcome, moderator...', rows = therows)
 
+@app.route('/adminPanel_Submit', methods=['POST', 'GET'])
+def admin_panel_submit():
+    if request.method == 'POST':
+        selection = request.form['userSearch']
+        db = getDbConnection()
+        cursor = db.cursor()
+        cursor.execute('SELECT story_name, story FROM stories where stories.author1 = %s or stories.author2 = %s', (selection,selection,))
+        newrows = cursor.fetchall()
+        cursor.execute('SELECT username, role, numStories FROM users')
+        therows = cursor.fetchall()
+        return render_template('adminPanel.html', msg = 'Stories from selected user', rows = therows, storyrows = newrows)
+
+@app.route('/adminPanel_userdelete', methods=['POST', 'GET'])
+def admin_panel_udelete():
+    if request.method == 'POST':
+        selection = request.form['userDelete']
+        db = getDbConnection()
+        cursor = db.cursor()
+        cursor.execute('DELETE FROM users WHERE users.username = %s', (selection,))
+        db.commit()
+        cursor.close()
+        cursor = db.cursor()
+        cursor.execute('SELECT username, role, numStories FROM users')
+        therows = cursor.fetchall()
+        return render_template('adminPanel.html', rows = therows)
+
+@app.route('/adminPanel_storydelete', methods=['POST', 'GET'])
+def admin_panel_sdelete():
+    if request.method == 'POST':
+        selection = request.form['storyDelete']
+        db = getDbConnection()
+        cursor = db.cursor()
+        cursor.execute('DELETE FROM stories WHERE stories.story_name = %s', (selection,))
+        db.commit()
+        cursor.close()
+        cursor = db.cursor()
+        cursor.execute('SELECT username, role, numStories FROM users')
+        therows = cursor.fetchall()
+        return render_template('adminPanel.html', rows = therows)
+
+
+@app.route('/adminPanel_storydelete', methods=['POST', 'GET'])
 
 @app.route('/createPrompt')
 def create_prompt():

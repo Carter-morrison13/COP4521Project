@@ -7,6 +7,55 @@
       </div>
       <center>
         <p>Admin Panel</p>
+        <table border="1">
+          <thead>
+            <td>User</td>
+            <td>Role</td>
+            <td>Stories</td>
+          </thead>
+          <tbody>
+            {% for row in rows %} 
+            <tr>
+              <td>{{row[0]}}</td>
+              <td>{{row[1]}}</td>
+              <td>{{row[2]}}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <form action="../adminPanel_Submit" method="POST">
+        <h3>Search a user's story history</h3><br>
+        <input type="text" name="userSearch"><br><br>
+        <input type="submit" value="Submit"><br><br>
+        
+        <table border="1">
+          <thead>
+            <td>Titles</td>
+            <td>Stories</td>
+          </thead>
+          <tbody>
+            {% for stores in storyrows %} 
+            <tr>
+              <td>{{stores[0]}}</td>
+              <td>{{stores[1]}}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </form>
+
+      <form action="../adminPanel_userdelete" method="POST">
+      <h3>Delete a user by username</h3><br>
+      <input type="text" name="userDelete"><br><br>
+      <input type="submit" value="Submit"><br><br>
+    </form>
+
+      <form action="../adminPanel_storydelete" method="POST">
+      <h3>Delete a story by storyname</h3><br>
+        <input type="text" name="storyDelete"><br><br>
+        <input type="submit" value="Submit"><br><br>
+      </form>
+
         <h2><a href="../">Back to Home </a></h2>
       <center>
       </body>
