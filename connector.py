@@ -42,7 +42,7 @@ def create_tables():
     # create the tables
     try:
         cursor.execute(
-            'CREATE TABLE users (username VARCHAR(20) NOT NULL UNIQUE, password VARCHAR(20) NOT NULL, role VARCHAR(20) NOT NULL, numStories INTEGER, PRIMARY KEY (username))')
+            'CREATE TABLE users (username VARCHAR(20) NOT NULL UNIQUE, password VARCHAR(100) NOT NULL, role VARCHAR(20) NOT NULL, numStories INTEGER, PRIMARY KEY (username))')
         cursor.execute(
             'CREATE TABLE storage (prompt VARCHAR(25) NOT NULL UNIQUE, genre VARCHAR(10) NOT NULL, PRIMARY KEY (prompt))')
         cursor.execute(

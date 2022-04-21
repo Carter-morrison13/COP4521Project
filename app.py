@@ -391,8 +391,8 @@ def chatroom(storyName):
         db = getDbConnection()
         # update the stories table with this new story
         cursor = db.cursor()
-        sql = "INSERT INTO stories (story_name, prompt, author1, author2, story) VALUES (%s,%s,%s,%s,%s)"
-        val = (chatroom.storyName, chatroom.prompt, chatroom.userList[0], chatroom.userList[1], chatroom.story)
+        sql = "INSERT INTO stories (story_name, prompt, author1, author2, story, ratings) VALUES (%s,%s,%s,%s,%s,%s)"
+        val = (chatroom.storyName, chatroom.prompt, chatroom.userList[0], chatroom.userList[1], chatroom.story, '0')
         cursor.execute(sql, val)
         db.commit()
         # update each of the two users 'numStories' field in the users table
