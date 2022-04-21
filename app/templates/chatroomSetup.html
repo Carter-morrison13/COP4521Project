@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <h3>Prompt and Genre:</h3>
+<form action="../shortstory_db/chatroomSetup" method="POST">
+
+<select name="prompt" id="prompt">
+    {% for i in prompt %}
+        <option value="{{ i[0] }}" SELECTED>{{ i }}</option>
+    {% endfor %}
+</select>
+
+<br>
+<h3>Story Title:</h3>
+<input id="storyName" type="text" name="storyName">
+<input id="submit" value="Submit" type="submit">
+
+<br>
+<h3><a href="../">Back to Home </a></h3>
+</head>
+</form>
+<body>
+
+</body>
+</html>

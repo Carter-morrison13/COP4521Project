@@ -1,0 +1,8 @@
+CREATE DATABASE shortstory_db;
+USE shortstory_db;
+
+CREATE TABLE users (username VARCHAR(20) NOT NULL UNIQUE, password VARCHAR(100) NOT NULL, role VARCHAR(20) NOT NULL, numStories INTEGER, PRIMARY KEY (username));
+CREATE TABLE storage (prompt VARCHAR(25) NOT NULL UNIQUE, genre VARCHAR(10) NOT NULL, PRIMARY KEY (prompt));
+CREATE TABLE stories (story_name VARCHAR(25) NOT NULL UNIQUE, prompt VARCHAR(25) NOT NULL UNIQUE, author1 VARCHAR(10) NOT NULL, author2 VARCHAR(10) NOT NULL, story TEXT NOT NULL, ratings INTEGER NOT NULL, PRIMARY KEY (story_name), FOREIGN KEY (prompt) REFERENCES storage(prompt));
+
+

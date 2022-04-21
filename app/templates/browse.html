@@ -1,0 +1,32 @@
+<html>
+    <body>
+        <h1 align="center">Stories</h1>
+
+        <table align="center" border = 0>
+
+            <table align="center" border = 1>
+         <thead>
+            <td>Story Name</td>
+            <td>Story</td>
+            <td>Author1</td>
+            <td>Author2</td>
+            <td>Ratings</td>
+         </thead>
+
+         {% for row in ROWS %}
+            <tr>
+               <td>{{row[0]}}</td>
+               <td>{{row[1]}}</td>
+               <td> {{row[2]}}</td>
+                <td> {{row[3]}}</td>
+                <td> {{row[4]}}</td>
+            </tr>
+         {% endfor %}
+      </table>
+        </table>
+
+        <center>
+            <h2><a href="../">Back to Home </a></h2>
+        </center>
+    </body>
+</html>

@@ -1,0 +1,25 @@
+<html>
+    <body>     
+        <h1 align="center">Top Users</h1>
+
+        <table align="center" border = 0>
+            <thead>
+                <th>#</th>
+                <th>Username</th>
+                <th>Number of Stories</th>
+            </thead>
+            
+            {% for user in usersList %}
+                <tr>
+                    <td>{{user[2]}}.</td>
+                    <td>{{user[0]}}</td>
+                    <td>{{user[1]}}</td>
+                </tr>
+            {% endfor %}
+        </table>
+
+        <center>
+            <h2><a href="../">Back to Home </a></h2>
+        <center>
+    </body>
+</html>

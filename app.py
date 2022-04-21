@@ -1,15 +1,11 @@
 import hashlib
-from collections import UserList
-from re import S
-from turtle import st
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, session
 import mysql.connector
 import time
 from waitress import serve
 
 app = Flask(__name__)
 app.secret_key = 'your secret key'
-
 
 class ChatroomClass:
     def __init__(self):

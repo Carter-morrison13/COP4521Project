@@ -1,0 +1,24 @@
+<html>
+    <body>
+      <div class="navbar">
+        <a class="active" href="../..">Home</a>
+        <a href="../shortstory_db/profile">Profile</a>
+        <a href="../shortstory_db/logout">Logout</a>
+      </div>
+        <center>
+            <p>{{ msg }}</p>
+            <br>
+                <form action="../shortstory_db/moderate" method="POST">
+
+                  <h3>To become a moderator, please enter the moderator passowrd.</h3>
+                  Password:<br>
+                  <input type="text" name="modAns"><br>
+
+                  <input type="submit" value="Submit"><br>
+
+                  <h2><a href="../..">Back to Home </a></h2>
+
+                </form>
+          <center>
+      </body>
+</html>

@@ -1,0 +1,43 @@
+<meta http-equiv="refresh" content="10">
+<html>
+<body onload="isItMyTurnYet()">
+<br>
+<tr>
+    <table align="center" border = 1>
+         <thead>
+            <td>Story So Far</td>
+            <td>Prompt</td>
+         </thead>
+         <td>{{story}}</td>
+        <td>{{prompt}}</td>
+      </table>
+</tr>
+<td>Type Your Story Here</td>
+<form action = "../shortstory_db/chatroom_{{storyName}}" method="POST">
+    <textarea id="StoryBox" name="StoryBox" rows="2" cols="31"></textarea>
+    <br>
+    Are you done? (type 'yes' or 'no')<input type="text" id ="done" name="done"><br>
+    <input id="submit" type="submit" value="Submit"><br>
+
+</form>
+</body>
+<script>
+    function isItMyTurnYet() {
+        let check = "no";
+        let turnCheck = '{{ typingTurn }}';
+        let checkTwo = '{{ allowed }}';
+        let NAME = '{{ username }}';
+
+        if (checkTwo == check) {
+            document.getElementById('submit').disabled = 'disabled';
+        } else {
+            document.getElementById('submit').disabled = false;
+        }
+        if (turnCheck == NAME) {
+            document.getElementById('submit').disabled = false;
+        } else {
+            document.getElementById('submit').disabled = 'disabled';
+        }
+    }
+</script>
+</html>

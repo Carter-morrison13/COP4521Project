@@ -1,0 +1,32 @@
+{% block content %}
+<div class="navbar">
+  <a class="active" href="../">Home</a>
+  <a href="../shortstory_db/profile">Profile</a>
+  <a href="../shortstory_db/logout">Logout</a>
+</div>
+    <center>
+      <h2>Profile Page</h2>
+      <div>
+          <p>Your account details are below:</p>
+          <table>
+              <tr>
+                  <td>Username:</td>
+                  <td>{{ username }}</td>
+              </tr>
+              <tr>
+                  <td>Password:</td>
+                  <td>{{ password }}</td>
+              </tr>
+              <tr>
+                  <td>Role:</td>
+                  <td>{{ role }}</td>
+              </tr>
+          </table>
+          <h2><a href="../">Back to Home </a></h2>
+          <br>
+          <h2><a href="../shortstory_db/support">Want to support us?</a></h2>
+          <h2><a href="../shortstory_db/moderate">Want to moderate?</a></h2>
+          <h2><a href="../shortstory_db/chatroomChoice">Ready to start creating?</a></h2>
+    <center>
+</div>
+{% endblock %}

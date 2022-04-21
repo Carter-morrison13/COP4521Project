@@ -1,0 +1,38 @@
+
+/*body properties */
+body {
+
+  background-image: linear-gradient(#f7f7f7 25%, 75%, #c4c4c4);
+  margin: 0px;
+}
+
+/*navbar properties */
+.navbar {
+  height:40px;
+  left: 0px;
+  opacity: 100%;
+  background-color: rgba(66, 66, 81, 0.6);
+  box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.75);
+}
+
+/*navbar list properties */
+.nav-links ul li{
+  text-align: left;
+  position: center;
+  list-style: none;
+  display: inline-block;
+  opacity:100%;
+  padding: 10px 5px;
+}
+
+/*Title properties */
+b {
+  font-family: 'Raleway', sans-serif;
+  color: blue;
+}
+
+/*Link properties */
+a {
+  font-family: 'Raleway', sans-serif;
+  font-size: 100%;
+}
