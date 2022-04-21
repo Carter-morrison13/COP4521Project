@@ -1,7 +1,10 @@
 import hashlib
 from collections import UserList
+from re import S
+from turtle import st
 from flask import Flask, render_template, request, redirect, url_for, session
 import mysql.connector
+import time
 from waitress import serve
 
 app = Flask(__name__)
@@ -16,62 +19,35 @@ class ChatroomClass:
         self.prompt = ''
         self.genre = ''
         self.story = ''
+        self.storyName = ''
 
-    def GetUserList(self):
-        return self.userList
+# dictionary/map of the current stories where key is the  going on
+chatrooms_map = {}
 
-    def AppendToUserList(self, user):
-        self.userList.append(user)
+# global for the waiting users
+waiting_users = []
 
-    def SetTurnToType(self, turn):
-        self.turnToType = turn
-
-    def GetTurnToType(self):
-        return self.turnToType
-
-    def GetFinishedTypingList(self):
-        return self.finishedTypingList
-
-    def AppendToFinishedTypingList(self, user):
-        self.finishedTypingList.append(user)
-
-    def GetPrompt(self):
-        return self.prompt
-
-    def SetPrompt(self, prompt):
-        self.prompt = prompt
-
-    def GetGenre(self):
-        return self.genre
-
-    def SetGenre(self, genre):
-        self.genre = genre
-
-    def GetStory(self):
-        return self.story
-
-    def SetStory(self, story):
-        self.story = story
-
-
-# dictionary/map of the current stories going on
-#
-current_stories = {}
-
-# currently one chatroom class
-test = ChatroomClass()
+# get chatroom for a specific user by their username using the fact
+# the user will be in the chatrooms userList
+def getChatroomByUser(user):
+    for chatroom_key in chatrooms_map:
+        chatroom = chatrooms_map[chatroom_key]
+        print(user)
+        print(chatroom.userList)
+        if user in chatroom.userList:
+            return chatroom
+    return None
 
 
 # function to get a db connection
 # change password to match yours
 def getDbConnection():
     return mysql.connector.connect(
-        host='localhost',
-        user='root',
-        password='testing',
-        database='shortstory_db'
-    )
-
+            host='localhost',
+            user='root',
+            password='testing',
+            database='shortstory_db'
+        )
 
 @app.route('/')
 def front_page():
@@ -308,27 +284,55 @@ def moderate():
     return render_template('moderate.html', msg=msg)
 
 
-# route for the chat room functionality
-@app.route("/shortstory_db/chatroom", methods=["POST", "GET"])
-def chatroom():
-    # if number of users in chat room is still 0
-    # then add the current user to the room and if it's
-    # noones turn to type it becomes their turn to type
-    # redirect to chatroom setup.
-    if len(test.userList) == 0:
-        test.userList.append(session['username'])
-        if test.turnToType == '':
-            test.turnToType = test.userList[0]
-        return redirect('/shortstory_db/chatroomSetup')
+@app.route('/shortstory_db/chatroomChoice', methods=["POST", "GET"])
+def chatroomChoice():
+    return render_template('chatroomChoice.html')
 
-    # if the current user is not in the userList at this point
-    # append them to the current userList
-    if session['username'] not in test.userList:
-        test.userList.append(session['username'])
+# function to implement users waiting in waiting room
+# essentially every 1s checks for open chat rooms and when one is open
+# they will be moved to this chatroom
+@app.route("/shortstory_db/waitingRoom", methods=["POST", "GET"])
+def waitingRoom():
+    # get current user and append to the waiting users queue
+    currentUser = session["username"]
+    
+    # now get the chatroom for this user and use it to redirect to the chatroom for his story
+    chatroom = getChatroomByUser(currentUser)
+    if chatroom != None:
+        return redirect('/shortstory_db/chatroom_'+chatroom.storyName)
 
-    # while the prompt is empty keep this user in a waiting room
-    while test.prompt == '':
+    global waiting_users
+    waiting_users.append(currentUser)
+    # while the current user is still in waiting users
+    while currentUser in waiting_users:
+        # want to pop the front waiting user
+        for chatroom_key in chatrooms_map:
+            chatroom = chatrooms_map[chatroom_key]
+            if len(chatroom.userList) == 1:
+                front_user = waiting_users[0]
+                # add this user to the chatroom
+                chatroom.userList.append(front_user)
+                # remove this user from waiting users
+                waiting_users.remove(front_user)
+        time.sleep(1)
         return render_template('waitingRoom.html')
+    
+    # now get the chatroom for this user and use it to redirect to the chatroom for his story
+    chatroom = getChatroomByUser(currentUser)
+    return redirect('/shortstory_db/chatroom_'+chatroom.storyName)
+
+# route for the chat room functionality
+@app.route("/shortstory_db/chatroom_<storyName>", methods=["POST", "GET"])
+def chatroom(storyName):
+    chatroom = chatrooms_map[storyName]
+
+    currentUser = session['username']
+
+    # wait until the second user joins the chatroom
+    while len(chatroom.userList) < 2:
+        time.sleep(1)
+        render_template('chatroom.html', username=currentUser, chatList=chatroom.userList, story=chatroom.story,
+                               prompt=chatroom.prompt, typingTurn=chatroom.turnToType, allowed='no', storyName=storyName)
 
     # now while the two users are not done typing we continually do POST
     # requests each time the user's go to this page
@@ -337,74 +341,70 @@ def chatroom():
     # if method is POST, then get whats in the story box
     # and then get if this user is done.
     if request.method == 'POST':
-        test.story += request.form['StoryBox']
+        chatroom.story += request.form['StoryBox']
         doneTyping = request.form.get('done')
 
     # if method is POST and the current user is not finished typing
-    if (request.method == 'POST') and (not (session['username'] in test.finishedTypingList)):
-        print(len(test.finishedTypingList))  # print the length of finished typing
-
-        # if length of finished typing is 0
-        if len(test.finishedTypingList) == 0:
+    if (request.method == 'POST') and (not (currentUser in chatroom.finishedTypingList)):
+        print(len(chatroom.finishedTypingList)) # print the length of finished typing
+        
+        # if length of finished typing is 0   
+        if len(chatroom.finishedTypingList) == 0:
             # check whose turn it is to type and then switch whose turn
-            if test.turnToType is test.userList[0]:
-                test.turnToType = test.userList[1]
+            if chatroom.turnToType is chatroom.userList[0]:
+                chatroom.turnToType = chatroom.userList[1]
             else:
-                test.turnToType = test.userList[0]
+                chatroom.turnToType = chatroom.userList[0]
 
-    # if current user is done typing and its not in the finished typing array of users
+    # if current user is done typing and is not in the finished typing array of users
     # append current user to finished typing
-    if doneTyping == 'yes' and not session['username'] in test.finishedTypingList:
-        test.finishedTypingList.append(session['username'])
+    if doneTyping == 'yes' and not currentUser in chatroom.finishedTypingList:
+        chatroom.finishedTypingList.append(currentUser)
 
     # when length of finished typing is 2 and the the first user in userList is the current user
-    if len(test.finishedTypingList) == 2 and test.userList[0] == session['username']:
+    if len(chatroom.finishedTypingList) == 2 and chatroom.userList[0] == currentUser:
         db = getDbConnection()
         # update the stories table with this new story
         cursor = db.cursor()
         sql = "INSERT INTO stories (story_name, prompt, author1, author2, story) VALUES (%s,%s,%s,%s,%s)"
-        val = (storyName, test.prompt, test.userList[0], test.userList[1], test.story)
+        val = (chatroom.storyName, chatroom.prompt, chatroom.userList[0], chatroom.userList[1], chatroom.story)
         cursor.execute(sql, val)
         db.commit()
         # update each of the two users 'numStories' field in the users table
         cursor = db.cursor()
-        sql = "UPDATE users SET numStories = numStories + 1 WHERE username='" + test.userList[0] + "'"
+        sql = "UPDATE users SET numStories = numStories + 1 WHERE username='" + chatroom.userList[0] + "'"
         cursor.execute(sql)
         db.commit()
         cursor = db.cursor()
-        sql = "UPDATE users SET numStories = numStories + 1 WHERE username='" + test.userList[1] + "'"
+        sql = "UPDATE users SET numStories = numStories + 1 WHERE username='" + chatroom.userList[1] + "'"
         cursor.execute(sql)
         db.commit()
-        test.userList = []
-        test.turnToType = ''
-        test.finishedTypingList = []
-        test.prompt = ''
-        test.genre = ''
-        tmp = test.story
-        test.story = ''
+        tmp = chatroom.story
+        # now delete this chatroom from our map of current chatrooms/stories
+        del chatrooms_map[chatroom.storyName]
 
         return render_template('finishedScreen.html', story=tmp)
 
     # else if finished typing list is length 2 and user 1 in the user list is the current user
-    elif len(test.finishedTypingList) == 2 and test.userList[1] == session['username']:
+    elif len(chatroom.finishedTypingList) == 2 and chatroom.userList[1] == session['username']:
         # return the finished screen
-        return render_template('finishedScreen.html', story=test.story)
+        return render_template('finishedScreen.html', story=chatroom.story)
 
     # if the current user is in the finished test list, then they are the first one to finish
-    if session['username'] in test.finishedTypingList:
-        return render_template('chatroom.html', username=session['username'], chatList=test.userList,
-                               story=test.story, prompt=test.prompt,
-                               typingTurn=test.turnToType, allowed='no')
+    if session['username'] in chatroom.finishedTypingList:
+        return render_template('chatroom.html', username=session['username'], chatList=chatroom.userList,
+                               story=chatroom.story, prompt=chatroom.prompt,
+                               typingTurn=chatroom.turnToType, allowed='no', storyName=storyName)
 
-    # if its the current users turn to type
-    if session['username'] == test.turnToType:
+     # if its the current users turn to type
+    if session['username'] == chatroom.turnToType:
         # render the chatroom with current info where they can type
-        return render_template('chatroom.html', username=session['username'], chatList=test.userList, story=test.story,
-                               prompt=test.prompt, typingTurn=test.turnToType, allowed='yes')
+        return render_template('chatroom.html', username=session['username'], chatList=chatroom.userList, story=chatroom.story,
+                               prompt=chatroom.prompt, typingTurn=chatroom.turnToType, allowed='yes', storyName=storyName)
     # else return them the chatroom where they cant type with the current info
     else:
-        return render_template('chatroom.html', username=session['username'], chatList=test.userList, story=test.story,
-                               prompt=test.prompt, typingTurn=test.turnToType, allowed='no')
+        return render_template('chatroom.html', username=session['username'], chatList=chatroom.userList, story=chatroom.story,
+                               prompt=chatroom.prompt, typingTurn=chatroom.turnToType, allowed='no', storyName=storyName)
 
 
 # route for when a user goes to the chatroom setup. First user to join the chat room
@@ -419,19 +419,32 @@ def chatroomSetup():
         cursor = db.cursor()
         # execute SELECT query to get the current prompts and genres to display to the user
         cursor.execute('SELECT prompt, genre FROM storage')
+        # TODO: get the genre as well
         prompt = cursor.fetchall()
+        print(prompt)
         return render_template('chatroomSetup.html', prompt=prompt)
     elif request.method == 'POST':
         # case 2. POST request
         # get the user selected prompt and story name
         prompt = request.form['prompt']
-        # store prompt in test
-        test.prompt = prompt
+        print('received prompt: {0}'.format(prompt))
+        #prompt = prompt[0]
+        #genre = prompt[1]
         # store storyName as a global
-        global storyName
         storyName = request.form['storyName']
-        return redirect('/shortstory_db/chatroom')
+        # create a new chatroom in the map
+        chatroom = ChatroomClass()
+        # set the prompt
+        chatroom.prompt = prompt
+        #chatroom.genre = genre
+        # add current user to the user list for this chatroom
+        chatroom.userList.append(session['username'])
+        chatroom.storyName = storyName
+        chatroom.turnToType = session['username']
+        # chatrooms map key 'storyName' now points to this new chatroom object
+        chatrooms_map[storyName] = chatroom
 
+        return redirect('/shortstory_db/chatroom_'+storyName)
 
 if __name__ == '__main__':
     # app.run(debug=True)
